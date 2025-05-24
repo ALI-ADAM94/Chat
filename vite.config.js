@@ -4,5 +4,5 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-    base: process.env.VITE_LOGIN_PATH || "/Chat",
+    base: process.env.VITE_CHAT_APP_PATH || "/Chat",
 })
