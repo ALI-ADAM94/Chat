@@ -1,9 +1,7 @@
 import { useState } from "react";
 import "./login.css";
 import { toast } from "react-toastify";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../../lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import  supabase  from "../../lib/supbaseClient"; // your Supabase client
 
 const Login = () => {
   const [avatar, setAvatar] = useState({
@@ -29,29 +27,65 @@ const Login = () => {
 
     const { username, email, password } = Object.fromEntries(formData);
 
-    try{
-
-      const res = await createUserWithEmailAndPassword(auth,email,password); 
-
-      await setDoc(doc(db, "users", res.user.uid), {
-        username,
+    try {
+      // Sign up user
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
-        id: res.user.uid,
+        password,
+      });
+
+      if (signUpError) throw signUpError;
+
+      const user = signUpData.user;
+      let avatarUrl = "";
+
+      // Upload avatar image if exists
+      if (avatar.file) {
+        const fileExt = avatar.file.name.split(".").pop();
+        const fileName = `${user.id}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("avatars") // Make sure 'avatars' bucket exists
+          .upload(filePath, avatar.file, {
+            upsert: true,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(filePath);
+
+        avatarUrl = urlData.publicUrl;
+      }
+
+      // Insert into users table
+      const { error: userInsertError } = await supabase.from("users").insert({
+        id: user.id,
+        email,
+        username,
+        avatar: avatarUrl,
         blocked: [],
       });
 
-      await setDoc(doc(db, "userchats", res.user.uid), {
-        chat: [],
-      });
+      if (userInsertError) throw userInsertError;
+
+      // Insert into userchats table
+      const { error: chatInsertError } = await supabase
+        .from("userchats")
+        .insert({ id: user.id, chat: [] });
+
+      if (chatInsertError) throw chatInsertError;
 
       toast.success("Account created successfully");
-    }catch (err) {
+    } catch (err) {
       console.error(err);
-      toast.error(err.message);
-    }finally{
+      toast.error(err.message || "Registration failed");
+    } finally {
       setLoading(false);
     }
-  }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -61,18 +95,21 @@ const Login = () => {
     const { email, password } = Object.fromEntries(formData);
 
     try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      await signInWithEmailAndPassword(auth, email, password);
+      if (error) throw error;
 
       toast.success("Login successfully");
-      
     } catch (err) {
       console.error(err);
-      toast.error(err.message);
-    }finally{
+      toast.error(err.message || "Login failed");
+    } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="login">
@@ -90,7 +127,7 @@ const Login = () => {
         <form onSubmit={handleRegister}>
           <label htmlFor="file">
             <img src={avatar.url || "./avatar.png"} alt="" />
-            Uploade an Image
+            Upload an Image
           </label>
           <input
             type="file"
