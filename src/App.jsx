@@ -2,9 +2,9 @@ import { useEffect } from "react";
 import Chat from "./components/chat/Chat";
 import Detail from "./components/detail/Detail";
 import List from "./components/list/List";
-import Login from "./components/login/Login";
-import Notification from "./components/notification/Notification";
 
+import Notification from "./components/notification/Notification";
+import Login from './components/login/Login.jsx'
 import supabase from "./lib/supbaseClient";
 import { useUserStore } from "./lib/userStore";
 import { useChatStore } from "./lib/chatStore";
@@ -40,8 +40,8 @@ const App = () => {
     <div className="container">
       {currentUser ? (
         <>
-          <List/>
-          {chatId && <Chat/>}
+          <List />
+          {chatId && <Chat />}
           {chatId && <Detail/>}
         </>
       ) : (
