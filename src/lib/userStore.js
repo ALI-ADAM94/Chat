@@ -1,6 +1,6 @@
-import { doc, getDoc } from "firebase/firestore";
-import { create } from "zustand";
-import { db } from "./firebase";
+import { create } from 'zustand';
+import supabase from './supbaseClient';
+
 
 export const useUserStore = create((set) => ({
   currentUser: null,
@@ -9,14 +9,18 @@ export const useUserStore = create((set) => ({
     if (!uid) return set({ currentUser: null, isLoading: false });
 
     try {
-      const docRef = doc(db, "users", uid);
-      const docSnap = await getDoc(docRef);
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', uid) // adjust this field if your primary key isn't 'id'
+        .single();
 
-      if (docSnap.exists()) {
-        set({currentUser: docSnap.data(), isLoading: false });
-      } else {
-        set({ currentUser: null, isLoading: false });
+      if (error || !data) {
+        console.error(error);
+        return set({ currentUser: null, isLoading: false });
       }
+
+      set({ currentUser: data, isLoading: false });
     } catch (err) {
       console.error(err);
       return set({ currentUser: null, isLoading: false });
