@@ -1,29 +1,27 @@
 import { create } from 'zustand';
 import supabase from './supbaseClient';
 
-
 export const useUserStore = create((set) => ({
   currentUser: null,
   isLoading: true,
-  fetchUserInfo: async (uid) => {
-    if (!uid) return set({ currentUser: null, isLoading: false });
 
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', uid) // adjust this field if your primary key isn't 'id'
-        .single();
+  fetchUserInfo: async (id) => {
+    if (!id) {
+      set({ currentUser: null, isLoading: false });
+      return;
+    }
 
-      if (error || !data) {
-        console.error(error);
-        return set({ currentUser: null, isLoading: false });
-      }
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
 
+    if (error) {
+      console.error('Fetch user error:', error);
+      set({ currentUser: null, isLoading: false });
+    } else {
       set({ currentUser: data, isLoading: false });
-    } catch (err) {
-      console.error(err);
-      return set({ currentUser: null, isLoading: false });
     }
   },
 }));

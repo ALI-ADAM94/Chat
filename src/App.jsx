@@ -5,7 +5,7 @@ import List from "./components/list/List";
 import Login from "./components/login/Login";
 import Notification from "./components/notification/Notification";
 
-import  supabase  from "./lib/supbaseClient"; // Assumes you export the client from here
+import supabase from "./lib/supbaseClient";
 import { useUserStore } from "./lib/userStore";
 import { useChatStore } from "./lib/chatStore";
 
@@ -14,19 +14,17 @@ const App = () => {
   const { chatId } = useChatStore();
 
   useEffect(() => {
-    // Get the current session on initial load
     const getCurrentUser = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       const user = session?.user;
-      fetchUserInfo(user?.id); // Supabase uses `id` instead of `uid`
+      fetchUserInfo(user?.id);
     };
 
     getCurrentUser();
 
-    // Listen to auth changes (sign in/out)
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user;
       fetchUserInfo(user?.id);
     });
