@@ -40,14 +40,14 @@ const App = () => {
     <div className="container">
       {currentUser ? (
         <>
-          <List />
-          {chatId && <Chat />}
-          {chatId && <Detail />}
+          <List/>
+          {chatId && <Chat/>}
+          {chatId && <Detail/>}
         </>
       ) : (
-        <Login />
+        <Login/>
       )}
-      <Notification />
+      <Notification/>
     </div>
   );
 };
